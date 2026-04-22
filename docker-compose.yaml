@@ -1,0 +1,30 @@
+# docker-compose.yml
+services:
+  frontend:
+    image: foundation-ory/frontend-preact:local
+    restart: always
+    env_file:
+      - path: .env
+        required: true
+    volumes:
+      - ./env/${VITE_ENVIRONMENT_NAME}.json:/app/dist/env.json
+    labels:
+      - "traefik.enable=true"
+      # SELF SERVE UI
+      # Name-routed from "auth" subdomain
+      - "traefik.http.routers.frontend.rule=Host(`${SERVICE_DOMAIN}`)" # Default route / UI view on domain
+      # Service LB for port forwarding
+      - "traefik.http.services.frontend-svclb.loadbalancer.server.port=3000"
+      - "traefik.http.routers.frontend.service=frontend-svclb"
+      # HTTP/HTTPS ingress
+      - "traefik.http.routers.frontend.entrypoints=web-insecure,web-secure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.middlewares=https-redirect"
+      # Production ACME cert
+      - "traefik.http.routers.frontend.tls.certresolver=${ACME_DEFAULT_RESOLVER}"
+    networks:
+      - fory_backend
+
+networks:
+  fory_backend:
+    external: true

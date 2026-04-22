@@ -1,0 +1,4 @@
+
+# When building the docker image we skip loading the development environment
+# The container config for the Vite environment must be mounted at runtime
+dist/env.json
