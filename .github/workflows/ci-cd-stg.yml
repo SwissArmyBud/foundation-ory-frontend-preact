@@ -1,84 +1,84 @@
-name: CI/CD Pipeline
+# name: CI/CD Pipeline
 
-defaults:
-  run:
-    shell: bash
+# defaults:
+#   run:
+#     shell: bash
 
-on:
-  push:
-    branches: [staging]
-  pull_request:
+# on:
+#   push:
+#     branches: [staging]
+#   pull_request:
 
-env:
-  BASH_ENV: ~/.profile
+# env:
+#   BASH_ENV: ~/.profile
 
-jobs:
-  # All PRs and also any pushes to main get checked out and built
-  checkout:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v6
+# jobs:
+#   # All PRs and also any pushes to main get checked out and built
+#   checkout:
+#     runs-on: self-hosted
+#     steps:
+#       - uses: actions/checkout@v6
 
-  build:
-    needs: checkout
-    runs-on: self-hosted
-    steps:
-      - name: Install and build client
-        run: |
-          npm install
-          npm run build
+#   build:
+#     needs: checkout
+#     runs-on: self-hosted
+#     steps:
+#       - name: Install and build client
+#         run: |
+#           npm install
+#           npm run build
 
-      - name: Verify build outputs
-        run: |
-          echo "Checking client build..."
-          ls -la dist
+#       - name: Verify build outputs
+#         run: |
+#           echo "Checking client build..."
+#           ls -la dist
 
-  # All branch PRs and any pushes to main get tested
-  test:
-    needs: build
-    runs-on: self-hosted
-    if: github.ref_name == ('main')
-    steps:
-      - name: Run basic tests
-        run: |
-          echo "Build completed successfully!"
-          ls -la dist
+#   # All branch PRs and any pushes to main get tested
+#   test:
+#     needs: build
+#     runs-on: self-hosted
+#     if: github.ref_name == ('main')
+#     steps:
+#       - name: Run basic tests
+#         run: |
+#           echo "Build completed successfully!"
+#           ls -la dist
 
-  # Pushes to main get deployed
-  deploy:
-    needs: test
-    runs-on: self-hosted
-    if: (github.event_name == 'push') && (github.ref_name == 'main')
-    defaults:
-      run:
-        shell: bash
-        working-directory: /usr/foundation-ory/frontend
-    environment: Staging
-    env:
-      SERVICE_DOMAIN: ${{ secrets.SERVICE_DOMAIN }}
-      VITE_ENVIRONMENT_NAME: ${{ secrets.GH_ENVIRONMENT_NAME }}
-    steps:
-      - name: Build and start services
-        run: |
-          echo "Checking out..."
-          git reset --hard
-          git checkout main
-          git pull
+#   # Pushes to main get deployed
+#   deploy:
+#     needs: test
+#     runs-on: self-hosted
+#     if: (github.event_name == 'push') && (github.ref_name == 'main')
+#     defaults:
+#       run:
+#         shell: bash
+#         working-directory: /usr/foundation-ory/frontend
+#     environment: Staging
+#     env:
+#       SERVICE_DOMAIN: ${{ secrets.SERVICE_DOMAIN }}
+#       VITE_ENVIRONMENT_NAME: ${{ secrets.GH_ENVIRONMENT_NAME }}
+#     steps:
+#       - name: Build and start services
+#         run: |
+#           echo "Checking out..."
+#           git reset --hard
+#           git checkout main
+#           git pull
 
-          rm -rf dist
-          cp -R /usr/foundation-ory/frontend/runner/actions-runner/_work/frontend/frontend/dist dist
+#           rm -rf dist
+#           cp -R /usr/foundation-ory/foundation-ory-frontend-preact/runner/actions-runner/_work/foundation-ory-frontend-preact/foundation-ory-frontend-preact/dist dist
 
-          echo "Building docker container..."
-          docker build . -t foundation-ory/frontend:local
+#           echo "Building docker container..."
+#           docker build . -t foundation-ory/frontend-preact:local
 
-          echo "Starting deployment..."
-          # Restart services (full rebuild for Traefik labels)
-          docker compose down && docker compose up -d
+#           echo "Starting deployment..."
+#           # Restart services (full rebuild for Traefik labels)
+#           docker compose down && docker compose up -d
 
-          # Wait a bit for services to start
-          echo "Waiting for services to initialize..."
-          sleep 10
+#           # Wait a bit for services to start
+#           echo "Waiting for services to initialize..."
+#           sleep 10
 
-          # Show running services
-          echo "Services status:"
-          docker compose ps
+#           # Show running services
+#           echo "Services status:"
+#           docker compose ps
